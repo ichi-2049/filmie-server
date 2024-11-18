@@ -1,0 +1,11 @@
+type Movie {
+    movieID: Int!
+    title: String!
+    overview: String!
+    releaseDate: Date!
+    s3ImageUrl: String!
+    popularity: Float!
+    originalLanguage: String!
+    voteAverage: Float!
+    voteCount: Int!
+}

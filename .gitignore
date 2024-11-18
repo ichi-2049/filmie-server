@@ -1,0 +1,3 @@
+*.env
+*.env.debug
+app/cmd/local/tmdb/*.sh

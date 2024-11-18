@@ -1,0 +1,36 @@
+version: '3.9'
+services:
+  # DB用コンテナ作成
+  db:
+    container_name: filmie-db
+    # イメージの指定(docker-hubから直接流用)
+    image: 'mysql:8.0'
+    # DBデータ保持用のボリュームをバインド
+    volumes: 
+      - db_data:/var/lib/mysql
+    env_file:
+      - ./.env # 環境変数ファイルへのパス
+    ports:
+      - 3306:3306
+  # API用コンテナ作成
+  api:
+    container_name: filmie-server
+    build: . # イメージのビルドに使用するDockerfileへの相対パス
+    volumes:
+    # バインドマウント
+      - type: bind 
+        source: ./app
+        target: /app
+      - ./app/db/migrations:/app/db/migrations
+    ports:
+      - 5050:5050
+    env_file:
+      - ./.env
+    # 依存するサービス名(先に起動させたいサービス)
+    depends_on:
+      - db
+    environment:
+      - GOOSE_DIR=/app/db/migrations
+# DBデータ保持用のボリューム
+volumes:
+  db_data:
