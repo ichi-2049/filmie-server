@@ -11,6 +11,7 @@ import (
 type Container struct {
 	db           *gorm.DB
 	movieService *services.MovieService
+	userService  *services.UserService
 	once         sync.Once
 }
 
@@ -34,4 +35,12 @@ func (c *Container) GetMovieService() *services.MovieService {
 		c.movieService = services.NewMovieService(movieRepo)
 	})
 	return c.movieService
+}
+
+func (c *Container) GetUserService() *services.UserService {
+	c.once.Do(func() {
+		userRepo := repositoryImpl.NewUserRepositoryImpl(c.db)
+		c.userService = services.NewUserService(userRepo)
+	})
+	return c.userService
 }
