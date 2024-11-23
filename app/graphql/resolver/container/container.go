@@ -4,15 +4,18 @@ import (
 	"sync"
 
 	"github.com/ichi-2049/filmie-server/internal/application/services"
+	"github.com/ichi-2049/filmie-server/internal/domain/repositories"
 	"github.com/ichi-2049/filmie-server/internal/infrastructure/repositoryImpl"
 	"gorm.io/gorm"
 )
 
 type Container struct {
+	once         sync.Once
 	db           *gorm.DB
+	movieRepo    repositories.MovieRepository
+	userRepo     repositories.UserRepository
 	movieService *services.MovieService
 	userService  *services.UserService
-	once         sync.Once
 }
 
 var (
@@ -25,22 +28,24 @@ func NewContainer(db *gorm.DB) *Container {
 		instance = &Container{
 			db: db,
 		}
+		instance.initialize()
 	})
 	return instance
 }
 
-func (c *Container) GetMovieService() *services.MovieService {
+func (c *Container) initialize() {
 	c.once.Do(func() {
-		movieRepo := repositoryImpl.NewMovieRepositoryImpl(c.db)
-		c.movieService = services.NewMovieService(movieRepo)
+		c.movieRepo = repositoryImpl.NewMovieRepositoryImpl(c.db)
+		c.userRepo = repositoryImpl.NewUserRepositoryImpl(c.db)
+		c.movieService = services.NewMovieService(c.movieRepo)
+		c.userService = services.NewUserService(c.userRepo)
 	})
+}
+
+func (c *Container) GetMovieService() *services.MovieService {
 	return c.movieService
 }
 
 func (c *Container) GetUserService() *services.UserService {
-	c.once.Do(func() {
-		userRepo := repositoryImpl.NewUserRepositoryImpl(c.db)
-		c.userService = services.NewUserService(userRepo)
-	})
 	return c.userService
 }
