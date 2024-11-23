@@ -48,12 +48,12 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Movie struct {
+		ImageURL         func(childComplexity int) int
 		MovieID          func(childComplexity int) int
 		OriginalLanguage func(childComplexity int) int
 		Overview         func(childComplexity int) int
 		Popularity       func(childComplexity int) int
 		ReleaseDate      func(childComplexity int) int
-		S3ImageURL       func(childComplexity int) int
 		Title            func(childComplexity int) int
 		VoteAverage      func(childComplexity int) int
 		VoteCount        func(childComplexity int) int
@@ -95,6 +95,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	_ = ec
 	switch typeName + "." + field {
 
+	case "Movie.imageUrl":
+		if e.complexity.Movie.ImageURL == nil {
+			break
+		}
+
+		return e.complexity.Movie.ImageURL(childComplexity), true
+
 	case "Movie.movieID":
 		if e.complexity.Movie.MovieID == nil {
 			break
@@ -129,13 +136,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Movie.ReleaseDate(childComplexity), true
-
-	case "Movie.s3ImageUrl":
-		if e.complexity.Movie.S3ImageURL == nil {
-			break
-		}
-
-		return e.complexity.Movie.S3ImageURL(childComplexity), true
 
 	case "Movie.title":
 		if e.complexity.Movie.Title == nil {
@@ -622,8 +622,8 @@ func (ec *executionContext) fieldContext_Movie_releaseDate(_ context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _Movie_s3ImageUrl(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.Movie) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Movie_s3ImageUrl(ctx, field)
+func (ec *executionContext) _Movie_imageUrl(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.Movie) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Movie_imageUrl(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -636,7 +636,7 @@ func (ec *executionContext) _Movie_s3ImageUrl(ctx context.Context, field graphql
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.S3ImageURL, nil
+		return obj.ImageURL, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -653,7 +653,7 @@ func (ec *executionContext) _Movie_s3ImageUrl(ctx context.Context, field graphql
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Movie_s3ImageUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Movie_imageUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Movie",
 		Field:      field,
@@ -889,8 +889,8 @@ func (ec *executionContext) fieldContext_Query_movies(_ context.Context, field g
 				return ec.fieldContext_Movie_overview(ctx, field)
 			case "releaseDate":
 				return ec.fieldContext_Movie_releaseDate(ctx, field)
-			case "s3ImageUrl":
-				return ec.fieldContext_Movie_s3ImageUrl(ctx, field)
+			case "imageUrl":
+				return ec.fieldContext_Movie_imageUrl(ctx, field)
 			case "popularity":
 				return ec.fieldContext_Movie_popularity(ctx, field)
 			case "originalLanguage":
@@ -3042,8 +3042,8 @@ func (ec *executionContext) _Movie(ctx context.Context, sel ast.SelectionSet, ob
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "s3ImageUrl":
-			out.Values[i] = ec._Movie_s3ImageUrl(ctx, field, obj)
+		case "imageUrl":
+			out.Values[i] = ec._Movie_imageUrl(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

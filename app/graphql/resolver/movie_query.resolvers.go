@@ -25,7 +25,7 @@ func (r *queryResolver) Movies(ctx context.Context) ([]*gqlmodel.Movie, error) {
 			Title:            movie.Title,
 			Overview:         movie.Overview,
 			ReleaseDate:      movie.ReleaseDate,
-			S3ImageURL:       movie.S3ImageURL,
+			ImageURL:         movie.TMDBImageURL,
 			Popularity:       float64(movie.Popularity),
 			OriginalLanguage: movie.OriginalLanguage,
 			VoteAverage:      float64(movie.VoteAverage),

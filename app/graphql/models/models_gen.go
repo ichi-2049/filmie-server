@@ -11,7 +11,7 @@ type Movie struct {
 	Title            string     `json:"title"`
 	Overview         string     `json:"overview"`
 	ReleaseDate      types.Date `json:"releaseDate"`
-	S3ImageURL       string     `json:"s3ImageUrl"`
+	ImageURL         string     `json:"imageUrl"`
 	Popularity       float64    `json:"popularity"`
 	OriginalLanguage string     `json:"originalLanguage"`
 	VoteAverage      float64    `json:"voteAverage"`
