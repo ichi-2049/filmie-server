@@ -9,31 +9,17 @@ import (
 
 	graph "github.com/ichi-2049/filmie-server/graphql"
 	gqlmodel "github.com/ichi-2049/filmie-server/graphql/models"
+	"github.com/ichi-2049/filmie-server/graphql/resolver/converter"
 )
 
 // Movies is the resolver for the movies field.
-func (r *queryResolver) Movies(ctx context.Context) ([]*gqlmodel.Movie, error) {
-	movies, err := r.container.GetMovieService().GetAllMovies()
+func (r *queryResolver) Movies(ctx context.Context, input *gqlmodel.MovieConnectionInput) (*gqlmodel.MovieConnection, error) {
+	movieConnection, err := r.container.GetMovieService().GetMovieConnection(*input.First, input.After, input.Title)
 	if err != nil {
 		return nil, err
 	}
 
-	graphqlMovies := make([]*gqlmodel.Movie, len(movies))
-	for i, movie := range movies {
-		graphqlMovies[i] = &gqlmodel.Movie{
-			MovieID:          movie.MovieID,
-			Title:            movie.Title,
-			Overview:         movie.Overview,
-			ReleaseDate:      movie.ReleaseDate,
-			S3ImageURL:       movie.S3ImageURL,
-			Popularity:       float64(movie.Popularity),
-			OriginalLanguage: movie.OriginalLanguage,
-			VoteAverage:      float64(movie.VoteAverage),
-			VoteCount:        int(movie.VoteCount),
-		}
-	}
-
-	return graphqlMovies, nil
+	return converter.ConvertMovieConnection(movieConnection), nil
 }
 
 // Query returns graph.QueryResolver implementation.

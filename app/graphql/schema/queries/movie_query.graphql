@@ -1,3 +1,25 @@
 extend type Query {
-    movies: [Movie!]!
+    movies(input: MovieConnectionInput): MovieConnection!
+}
+
+input MovieConnectionInput {
+  first: Int
+  after: String
+  title: String
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  endCursor: String
+}
+
+type MovieEdge {
+  cursor: String!
+  node: Movie!
+}
+
+type MovieConnection {
+  edges: [MovieEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
 }

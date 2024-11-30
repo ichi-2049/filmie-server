@@ -11,11 +11,33 @@ type Movie struct {
 	Title            string     `json:"title"`
 	Overview         string     `json:"overview"`
 	ReleaseDate      types.Date `json:"releaseDate"`
-	S3ImageURL       string     `json:"s3ImageUrl"`
+	ImageURL         string     `json:"imageUrl"`
 	Popularity       float64    `json:"popularity"`
 	OriginalLanguage string     `json:"originalLanguage"`
 	VoteAverage      float64    `json:"voteAverage"`
 	VoteCount        int        `json:"voteCount"`
+}
+
+type MovieConnection struct {
+	Edges      []*MovieEdge `json:"edges"`
+	PageInfo   *PageInfo    `json:"pageInfo"`
+	TotalCount int          `json:"totalCount"`
+}
+
+type MovieConnectionInput struct {
+	First *int    `json:"first,omitempty"`
+	After *string `json:"after,omitempty"`
+	Title *string `json:"title,omitempty"`
+}
+
+type MovieEdge struct {
+	Cursor string `json:"cursor"`
+	Node   *Movie `json:"node"`
+}
+
+type PageInfo struct {
+	HasNextPage bool    `json:"hasNextPage"`
+	EndCursor   *string `json:"endCursor,omitempty"`
 }
 
 type Query struct {
