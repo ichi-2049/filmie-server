@@ -14,18 +14,13 @@ import (
 
 // Movies is the resolver for the movies field.
 func (r *queryResolver) Movies(ctx context.Context, input *gqlmodel.MovieConnectionInput) (*gqlmodel.MovieConnection, error) {
-	movieConnection, err := r.container.GetMovieService().GetMovieConnection(*input.First, input.After)
+	movieConnection, err := r.container.GetMovieService().GetMovieConnection(*input.First, input.After, input.Title)
 	if err != nil {
 		return nil, err
 	}
 
 	return convertMovieConnection(movieConnection), nil
 }
-
-// Query returns graph.QueryResolver implementation.
-func (r *Resolver) Query() graph.QueryResolver { return &queryResolver{r} }
-
-type queryResolver struct{ *Resolver }
 
 func convertMovieConnection(movieConnection *domain.MovieConnection) *gqlmodel.MovieConnection {
 	if movieConnection == nil {
@@ -64,3 +59,8 @@ func convertMovieConnection(movieConnection *domain.MovieConnection) *gqlmodel.M
 		TotalCount: int(movieConnection.TotalCount),
 	}
 }
+
+// Query returns graph.QueryResolver implementation.
+func (r *Resolver) Query() graph.QueryResolver { return &queryResolver{r} }
+
+type queryResolver struct{ *Resolver }

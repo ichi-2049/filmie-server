@@ -22,8 +22,8 @@ CREATE TABLE movies (
     `vote_count` INT UNSIGNED NOT NULL COMMENT '評価数',
     `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '作成日時',
     `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新日時',
-    KEY `title` (`title`),
-    KEY `release_date` (`release_date`)
+    KEY `idx_title_popularity` (`title`, `popularity DESC`, `movie_id ASC`),
+    KEY `idx_popularity_movie_id` (`popularity DESC`, `movie_id ASC`)
 ) COMMENT '映画';
 
 DROP TABLE IF EXISTS genre_masters;

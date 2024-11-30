@@ -6,6 +6,7 @@ extend type Query {
 input MovieConnectionInput {
   first: Int
   after: String
+  title: String
 }
 
 type PageInfo {

@@ -3450,7 +3450,7 @@ func (ec *executionContext) unmarshalInputMovieConnectionInput(ctx context.Conte
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"first", "after"}
+	fieldsInOrder := [...]string{"first", "after", "title"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -3471,6 +3471,13 @@ func (ec *executionContext) unmarshalInputMovieConnectionInput(ctx context.Conte
 				return it, err
 			}
 			it.After = data
+		case "title":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Title = data
 		}
 	}
 

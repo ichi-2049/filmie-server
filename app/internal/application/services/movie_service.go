@@ -19,6 +19,6 @@ func (s *MovieService) GetAllMovies() ([]*domain.Movie, error) {
 	return s.movieRepo.GetAllMovies()
 }
 
-func (s *MovieService) GetMovieConnection(first int, after *string) (*domain.MovieConnection, error) {
-	return s.movieRepo.GetMovieConnection(first, after)
+func (s *MovieService) GetMovieConnection(first int, after *string, title *string) (*domain.MovieConnection, error) {
+	return s.movieRepo.GetMovieConnection(first, after, title)
 }
