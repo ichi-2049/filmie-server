@@ -18,3 +18,7 @@ func NewMovieService(movieRepo repositories.MovieRepository) *MovieService {
 func (s *MovieService) GetAllMovies() ([]*domain.Movie, error) {
 	return s.movieRepo.GetAllMovies()
 }
+
+func (s *MovieService) GetMovieConnection(first int, after *string) (*domain.MovieConnection, error) {
+	return s.movieRepo.GetMovieConnection(first, after)
+}

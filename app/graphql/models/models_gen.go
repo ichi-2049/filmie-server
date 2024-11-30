@@ -18,6 +18,27 @@ type Movie struct {
 	VoteCount        int        `json:"voteCount"`
 }
 
+type MovieConnection struct {
+	Edges      []*MovieEdge `json:"edges"`
+	PageInfo   *PageInfo    `json:"pageInfo"`
+	TotalCount int          `json:"totalCount"`
+}
+
+type MovieConnectionInput struct {
+	First *int    `json:"first,omitempty"`
+	After *string `json:"after,omitempty"`
+}
+
+type MovieEdge struct {
+	Cursor string `json:"cursor"`
+	Node   *Movie `json:"node"`
+}
+
+type PageInfo struct {
+	HasNextPage bool    `json:"hasNextPage"`
+	EndCursor   *string `json:"endCursor,omitempty"`
+}
+
 type Query struct {
 }
 

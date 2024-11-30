@@ -59,8 +59,24 @@ type ComplexityRoot struct {
 		VoteCount        func(childComplexity int) int
 	}
 
+	MovieConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	MovieEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	PageInfo struct {
+		EndCursor   func(childComplexity int) int
+		HasNextPage func(childComplexity int) int
+	}
+
 	Query struct {
-		Movies func(childComplexity int) int
+		Movies func(childComplexity int, input *gqlmodel.MovieConnectionInput) int
 		User   func(childComplexity int, uid string) int
 	}
 
@@ -72,7 +88,7 @@ type ComplexityRoot struct {
 }
 
 type QueryResolver interface {
-	Movies(ctx context.Context) ([]*gqlmodel.Movie, error)
+	Movies(ctx context.Context, input *gqlmodel.MovieConnectionInput) (*gqlmodel.MovieConnection, error)
 	User(ctx context.Context, uid string) (*gqlmodel.User, error)
 }
 
@@ -158,12 +174,66 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Movie.VoteCount(childComplexity), true
 
+	case "MovieConnection.edges":
+		if e.complexity.MovieConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.MovieConnection.Edges(childComplexity), true
+
+	case "MovieConnection.pageInfo":
+		if e.complexity.MovieConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.MovieConnection.PageInfo(childComplexity), true
+
+	case "MovieConnection.totalCount":
+		if e.complexity.MovieConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.MovieConnection.TotalCount(childComplexity), true
+
+	case "MovieEdge.cursor":
+		if e.complexity.MovieEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.MovieEdge.Cursor(childComplexity), true
+
+	case "MovieEdge.node":
+		if e.complexity.MovieEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.MovieEdge.Node(childComplexity), true
+
+	case "PageInfo.endCursor":
+		if e.complexity.PageInfo.EndCursor == nil {
+			break
+		}
+
+		return e.complexity.PageInfo.EndCursor(childComplexity), true
+
+	case "PageInfo.hasNextPage":
+		if e.complexity.PageInfo.HasNextPage == nil {
+			break
+		}
+
+		return e.complexity.PageInfo.HasNextPage(childComplexity), true
+
 	case "Query.movies":
 		if e.complexity.Query.Movies == nil {
 			break
 		}
 
-		return e.complexity.Query.Movies(childComplexity), true
+		args, err := ec.field_Query_movies_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Movies(childComplexity, args["input"].(*gqlmodel.MovieConnectionInput)), true
 
 	case "Query.user":
 		if e.complexity.Query.User == nil {
@@ -205,7 +275,9 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	rc := graphql.GetOperationContext(ctx)
 	ec := executionContext{rc, e, 0, 0, make(chan graphql.DeferredResult)}
-	inputUnmarshalMap := graphql.BuildUnmarshalerMap()
+	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputMovieConnectionInput,
+	)
 	first := true
 
 	switch rc.Operation.Operation {
@@ -339,6 +411,38 @@ func (ec *executionContext) field_Query___type_argsName(
 	}
 
 	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_movies_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Query_movies_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Query_movies_argsInput(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*gqlmodel.MovieConnectionInput, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["input"]
+	if !ok {
+		var zeroVal *gqlmodel.MovieConnectionInput
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalOMovieConnectionInput2ᚖgithubᚗcomᚋichiᚑ2049ᚋfilmieᚑserverᚋgraphqlᚋmodelsᚐMovieConnectionInput(ctx, tmp)
+	}
+
+	var zeroVal *gqlmodel.MovieConnectionInput
 	return zeroVal, nil
 }
 
@@ -842,8 +946,8 @@ func (ec *executionContext) fieldContext_Movie_voteCount(_ context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_movies(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_movies(ctx, field)
+func (ec *executionContext) _MovieConnection_edges(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.MovieConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MovieConnection_edges(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -856,7 +960,7 @@ func (ec *executionContext) _Query_movies(ctx context.Context, field graphql.Col
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Movies(rctx)
+		return obj.Edges, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -868,17 +972,205 @@ func (ec *executionContext) _Query_movies(ctx context.Context, field graphql.Col
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*gqlmodel.Movie)
+	res := resTmp.([]*gqlmodel.MovieEdge)
 	fc.Result = res
-	return ec.marshalNMovie2ᚕᚖgithubᚗcomᚋichiᚑ2049ᚋfilmieᚑserverᚋgraphqlᚋmodelsᚐMovieᚄ(ctx, field.Selections, res)
+	return ec.marshalNMovieEdge2ᚕᚖgithubᚗcomᚋichiᚑ2049ᚋfilmieᚑserverᚋgraphqlᚋmodelsᚐMovieEdgeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_movies(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_MovieConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Query",
+		Object:     "MovieConnection",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_MovieEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_MovieEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MovieEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MovieConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.MovieConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MovieConnection_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*gqlmodel.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋichiᚑ2049ᚋfilmieᚑserverᚋgraphqlᚋmodelsᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MovieConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MovieConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MovieConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.MovieConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MovieConnection_totalCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MovieConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MovieConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MovieEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.MovieEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MovieEdge_cursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MovieEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MovieEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MovieEdge_node(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.MovieEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MovieEdge_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*gqlmodel.Movie)
+	fc.Result = res
+	return ec.marshalNMovie2ᚖgithubᚗcomᚋichiᚑ2049ᚋfilmieᚑserverᚋgraphqlᚋmodelsᚐMovie(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MovieEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MovieEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "movieID":
@@ -902,6 +1194,154 @@ func (ec *executionContext) fieldContext_Query_movies(_ context.Context, field g
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Movie", field.Name)
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PageInfo_hasNextPage(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.PageInfo) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.HasNextPage, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PageInfo_hasNextPage(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PageInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PageInfo_endCursor(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.PageInfo) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PageInfo_endCursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.EndCursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PageInfo_endCursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PageInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_movies(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_movies(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Movies(rctx, fc.Args["input"].(*gqlmodel.MovieConnectionInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*gqlmodel.MovieConnection)
+	fc.Result = res
+	return ec.marshalNMovieConnection2ᚖgithubᚗcomᚋichiᚑ2049ᚋfilmieᚑserverᚋgraphqlᚋmodelsᚐMovieConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_movies(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "edges":
+				return ec.fieldContext_MovieConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_MovieConnection_pageInfo(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_MovieConnection_totalCount(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MovieConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_movies_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -3003,6 +3443,40 @@ func (ec *executionContext) fieldContext___Type_specifiedByURL(_ context.Context
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputMovieConnectionInput(ctx context.Context, obj interface{}) (gqlmodel.MovieConnectionInput, error) {
+	var it gqlmodel.MovieConnectionInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"first", "after"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "first":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.First = data
+		case "after":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.After = data
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -3067,6 +3541,140 @@ func (ec *executionContext) _Movie(ctx context.Context, sel ast.SelectionSet, ob
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var movieConnectionImplementors = []string{"MovieConnection"}
+
+func (ec *executionContext) _MovieConnection(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.MovieConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, movieConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("MovieConnection")
+		case "edges":
+			out.Values[i] = ec._MovieConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._MovieConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._MovieConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var movieEdgeImplementors = []string{"MovieEdge"}
+
+func (ec *executionContext) _MovieEdge(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.MovieEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, movieEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("MovieEdge")
+		case "cursor":
+			out.Values[i] = ec._MovieEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "node":
+			out.Values[i] = ec._MovieEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var pageInfoImplementors = []string{"PageInfo"}
+
+func (ec *executionContext) _PageInfo(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.PageInfo) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, pageInfoImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PageInfo")
+		case "hasNextPage":
+			out.Values[i] = ec._PageInfo_hasNextPage(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "endCursor":
+			out.Values[i] = ec._PageInfo_endCursor(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3619,7 +4227,31 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
-func (ec *executionContext) marshalNMovie2ᚕᚖgithubᚗcomᚋichiᚑ2049ᚋfilmieᚑserverᚋgraphqlᚋmodelsᚐMovieᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.Movie) graphql.Marshaler {
+func (ec *executionContext) marshalNMovie2ᚖgithubᚗcomᚋichiᚑ2049ᚋfilmieᚑserverᚋgraphqlᚋmodelsᚐMovie(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.Movie) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Movie(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNMovieConnection2githubᚗcomᚋichiᚑ2049ᚋfilmieᚑserverᚋgraphqlᚋmodelsᚐMovieConnection(ctx context.Context, sel ast.SelectionSet, v gqlmodel.MovieConnection) graphql.Marshaler {
+	return ec._MovieConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNMovieConnection2ᚖgithubᚗcomᚋichiᚑ2049ᚋfilmieᚑserverᚋgraphqlᚋmodelsᚐMovieConnection(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.MovieConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._MovieConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNMovieEdge2ᚕᚖgithubᚗcomᚋichiᚑ2049ᚋfilmieᚑserverᚋgraphqlᚋmodelsᚐMovieEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.MovieEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -3643,7 +4275,7 @@ func (ec *executionContext) marshalNMovie2ᚕᚖgithubᚗcomᚋichiᚑ2049ᚋfil
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNMovie2ᚖgithubᚗcomᚋichiᚑ2049ᚋfilmieᚑserverᚋgraphqlᚋmodelsᚐMovie(ctx, sel, v[i])
+			ret[i] = ec.marshalNMovieEdge2ᚖgithubᚗcomᚋichiᚑ2049ᚋfilmieᚑserverᚋgraphqlᚋmodelsᚐMovieEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -3663,14 +4295,24 @@ func (ec *executionContext) marshalNMovie2ᚕᚖgithubᚗcomᚋichiᚑ2049ᚋfil
 	return ret
 }
 
-func (ec *executionContext) marshalNMovie2ᚖgithubᚗcomᚋichiᚑ2049ᚋfilmieᚑserverᚋgraphqlᚋmodelsᚐMovie(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.Movie) graphql.Marshaler {
+func (ec *executionContext) marshalNMovieEdge2ᚖgithubᚗcomᚋichiᚑ2049ᚋfilmieᚑserverᚋgraphqlᚋmodelsᚐMovieEdge(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.MovieEdge) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._Movie(ctx, sel, v)
+	return ec._MovieEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋichiᚑ2049ᚋfilmieᚑserverᚋgraphqlᚋmodelsᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.PageInfo) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._PageInfo(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
@@ -3979,6 +4621,30 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	}
 	res := graphql.MarshalBoolean(*v)
 	return res
+}
+
+func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.SelectionSet, v *int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalInt(*v)
+	return res
+}
+
+func (ec *executionContext) unmarshalOMovieConnectionInput2ᚖgithubᚗcomᚋichiᚑ2049ᚋfilmieᚑserverᚋgraphqlᚋmodelsᚐMovieConnectionInput(ctx context.Context, v interface{}) (*gqlmodel.MovieConnectionInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputMovieConnectionInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v interface{}) (*string, error) {
