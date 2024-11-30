@@ -5,6 +5,9 @@ import (
 	domain "github.com/ichi-2049/filmie-server/internal/domain/models"
 )
 
+/*
+映画作品情報（カーソルページネーション）をdomainモデルからgqlモデルに変換する関数
+*/
 func ConvertMovieConnection(movieConnection *domain.MovieConnection) *gqlmodel.MovieConnection {
 	if movieConnection == nil {
 		return nil
