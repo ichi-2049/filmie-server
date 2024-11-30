@@ -26,6 +26,10 @@ type Cursor struct {
 	MovieID    int
 }
 
+/*
+映画作品情報をカーソルページネーションで取得する関数
+タイトル（optional）で検索をかけ、人気順（降順）と映画ID（昇順）でソートする
+*/
 func (r *MovieRepositoryImpl) GetMovieConnection(first int, after *string, title *string) (*domain.MovieConnection, error) {
 	// クエリのベースを作成
 	query := r.db.Model(&dao.Movie{})

@@ -25,7 +25,7 @@ type MovieConnection struct {
 }
 
 type MovieConnectionInput struct {
-	First *int    `json:"first,omitempty"`
+	First int     `json:"first"`
 	After *string `json:"after,omitempty"`
 	Title *string `json:"title,omitempty"`
 }
