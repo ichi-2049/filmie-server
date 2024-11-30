@@ -1,5 +1,4 @@
 extend type Query {
-    # movies: [Movie!]!
     movies(input: MovieConnectionInput): MovieConnection!
 }
 

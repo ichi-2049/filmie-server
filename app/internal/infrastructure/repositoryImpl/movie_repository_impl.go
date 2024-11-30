@@ -20,51 +20,10 @@ func NewMovieRepositoryImpl(db *gorm.DB) *MovieRepositoryImpl {
 	}
 }
 
-// 疎通テスト用関数　作品情報を取得する関数
-func (r *MovieRepositoryImpl) GetAllMovies() ([]*domain.Movie, error) {
-	var movieDao []*dao.Movie
-	result := r.db.Find(&movieDao).Limit(10)
-	if result.Error != nil {
-		return nil, result.Error
-	}
-
-	movies := make([]*domain.Movie, len(movieDao))
-	for i, dao := range movieDao {
-		movies[i] = dao.ToModel()
-	}
-
-	return movies, nil
-}
-
-// 映画作品情報を一括で登録する関数
-// 主キーが重複した場合は更新する
-func (r *MovieRepositoryImpl) BulkInsertMovies(movies []*domain.Movie) error {
-	tx := r.db.Begin()
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		} else if tx.Error != nil {
-			tx.Rollback()
-		}
-	}()
-
-	var movieDaoList []*dao.Movie
-	for _, movie := range movies {
-		movieDaoList = append(movieDaoList, dao.FromModel(movie))
-	}
-
-	// ON DUPLICATE KEY UPDATE
-	if err := tx.Clauses(clause.OnConflict{
-		UpdateAll: true, // 主キーが重複した場合にすべてのフィールドを更新
-	}).Create(movieDaoList).Error; err != nil {
-		return err
-	}
-
-	if err := tx.Commit().Error; err != nil {
-		return err
-	}
-
-	return nil
+// カーソルの構造体を定義
+type Cursor struct {
+	Popularity float32
+	MovieID    int
 }
 
 func (r *MovieRepositoryImpl) GetMovieConnection(first int, after *string, title *string) (*domain.MovieConnection, error) {
@@ -146,10 +105,35 @@ func (r *MovieRepositoryImpl) GetMovieConnection(first int, after *string, title
 	}, nil
 }
 
-// カーソルの構造体を定義
-type Cursor struct {
-	Popularity float32
-	MovieID    int
+// 映画作品情報を一括で登録する関数
+// 主キーが重複した場合は更新する
+func (r *MovieRepositoryImpl) BulkInsertMovies(movies []*domain.Movie) error {
+	tx := r.db.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		} else if tx.Error != nil {
+			tx.Rollback()
+		}
+	}()
+
+	var movieDaoList []*dao.Movie
+	for _, movie := range movies {
+		movieDaoList = append(movieDaoList, dao.FromModel(movie))
+	}
+
+	// ON DUPLICATE KEY UPDATE
+	if err := tx.Clauses(clause.OnConflict{
+		UpdateAll: true, // 主キーが重複した場合にすべてのフィールドを更新
+	}).Create(movieDaoList).Error; err != nil {
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // 人気度と映画IDをカーソル文字列にエンコードする関数
