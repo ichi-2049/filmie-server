@@ -14,7 +14,7 @@ import (
 
 // Movies is the resolver for the movies field.
 func (r *queryResolver) Movies(ctx context.Context, input *gqlmodel.MovieConnectionInput) (*gqlmodel.MovieConnection, error) {
-	movieConnection, err := r.container.GetMovieService().GetMovieConnection(*input.First, input.After, input.Title)
+	movieConnection, err := r.container.GetMovieService().GetMovieConnection(input.First, input.After, input.Title)
 	if err != nil {
 		return nil, err
 	}

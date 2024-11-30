@@ -3,7 +3,7 @@ extend type Query {
 }
 
 input MovieConnectionInput {
-  first: Int
+  first: Int!
   after: String
   title: String
 }
