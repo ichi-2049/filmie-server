@@ -8,9 +8,29 @@ import (
 	"github.com/ichi-2049/filmie-server/graphql/resolver"
 	"github.com/ichi-2049/filmie-server/graphql/resolver/container"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 func RegisterRoutes(e *echo.Echo) {
+	// CORS設定の追加
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{
+			"http://localhost:3000", // Next.jsの開発サーバー
+			// "https://hoge.com", // 本番環境のドメイン
+		},
+		AllowMethods: []string{
+			echo.GET,
+			echo.POST,
+			echo.OPTIONS,
+		},
+		AllowHeaders: []string{
+			echo.HeaderOrigin,
+			echo.HeaderContentType,
+			echo.HeaderAccept,
+			echo.HeaderAuthorization,
+		},
+	}))
+
 	// DB初期化
 	db := db.Init()
 
